@@ -1,27 +1,33 @@
+version: '3.9'
 services:
-  api_gateway:
-    build: api_gateway
-    ports:
-      - "8000:8000"
-    environment:
-      - NODE_ENV=production
-    networks:
-      - app-network
-
   service_users:
-    build: service_users
+    build: ./service_users
+    container_name: service_users
     environment:
-      - NODE_ENV=production
-    networks:
-      - app-network
+      - PORT=8001
+      - JWT_SECRET=dev_secret
+    ports:
+      - "8001:8001"
 
   service_orders:
-    build: service_orders
+    build: ./service_orders
+    container_name: service_orders
     environment:
-      - NODE_ENV=production
-    networks:
-      - app-network
+      - PORT=8002
+      - JWT_SECRET=dev_secret
+    ports:
+      - "8002:8002"
 
-networks:
-  app-network:
-    driver: bridge
+  api_gateway:
+    build: ./api_gateway
+    container_name: api_gateway
+    environment:
+      - PORT=8000
+      - JWT_SECRET=dev_secret
+      - USERS_URL=http://service_users:8001
+      - ORDERS_URL=http://service_orders:8002
+    ports:
+      - "8000:8000"
+    depends_on:
+      - service_users
+      - service_orders
