@@ -1,90 +1,28 @@
 const express = require('express');
-const cors = require('cors');
-
 const app = express();
-const PORT = process.env.PORT || 8000;
-
-// Middleware
-app.use(cors());
 app.use(express.json());
 
-// Имитация базы данных в памяти (LocalStorage)
-let fakeUsersDb = {};
-let currentId = 1;
+const users = [];
 
-// Routes
-app.get('/users', (req, res) => {
-    const users = Object.values(fakeUsersDb);
-    res.json(users);
+app.get('/v1/health', (_, res) => res.json({ success: true, data: { status: 'ok' } }));
+
+app.post('/v1/auth/register', (req, res) => {
+  const { email, password, name } = req.body;
+  if (users.find(u => u.email === email)) {
+    return res.status(409).json({ success: false, error: { code: 'USER_EXISTS', message: 'User already exists' } });
+  }
+  const id = users.length + 1;
+  const user = { id, email, name, password };
+  users.push(user);
+  res.status(201).json({ success: true, data: { id } });
 });
 
-app.post('/users', (req, res) => {
-    const userData = req.body;
-    const userId = currentId++;
-
-    const newUser = {
-        id: userId,
-        ...userData
-    };
-
-    fakeUsersDb[userId] = newUser;
-    res.status(201).json(newUser);
+app.post('/v1/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  const user = users.find(u => u.email === email && u.password === password);
+  if (!user) return res.status(401).json({ success: false, error: { code: 'INVALID_CREDENTIALS', message: 'Invalid login' } });
+  res.json({ success: true, data: { token: 'fake-jwt-token', userId: user.id } });
 });
 
-app.get('/users/health', (req, res) => {
-    res.json({
-        status: 'OK',
-        service: 'Users Service',
-        timestamp: new Date().toISOString()
-    });
-});
-
-app.get('/users/status', (req, res) => {
-    res.json({status: 'Users service is running'});
-});
-
-app.get('/users/:userId', (req, res) => {
-    const userId = parseInt(req.params.userId);
-    const user = fakeUsersDb[userId];
-
-    if (!user) {
-        return res.status(404).json({error: 'User not found'});
-    }
-
-    res.json(user);
-});
-
-app.put('/users/:userId', (req, res) => {
-    const userId = parseInt(req.params.userId);
-    const updates = req.body;
-
-    if (!fakeUsersDb[userId]) {
-        return res.status(404).json({error: 'User not found'});
-    }
-
-    const updatedUser = {
-        ...fakeUsersDb[userId],
-        ...updates
-    };
-
-    fakeUsersDb[userId] = updatedUser;
-    res.json(updatedUser);
-});
-
-app.delete('/users/:userId', (req, res) => {
-    const userId = parseInt(req.params.userId);
-
-    if (!fakeUsersDb[userId]) {
-        return res.status(404).json({error: 'User not found'});
-    }
-
-    const deletedUser = fakeUsersDb[userId];
-    delete fakeUsersDb[userId];
-
-    res.json({message: 'User deleted', deletedUser});
-});
-
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Users service running on port ${PORT}`);
-});
+const PORT = process.env.PORT || 8001;
+app.listen(PORT, () => console.log(`User service running on port ${PORT}`));
