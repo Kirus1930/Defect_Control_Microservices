@@ -1,96 +1,27 @@
 const express = require('express');
-const cors = require('cors');
-
 const app = express();
-const PORT = process.env.PORT || 8000;
-
-// Middleware
-app.use(cors());
 app.use(express.json());
 
-// Имитация базы данных в памяти (LocalStorage)
-let fakeOrdersDb = {};
-let currentId = 1;
+const orders = [];
 
-// Routes
-app.get('/orders/status', (req, res) => {
-    res.json({status: 'Orders service is running'});
+app.get('/v1/health', (_, res) => res.json({ success: true, data: { status: 'ok' } }));
+
+app.post('/v1/orders', (req, res) => {
+  const { userId, items, total } = req.body;
+  if (!userId || !items || !total) {
+    return res.status(400).json({ success: false, error: { code: 'INVALID_ORDER', message: 'Missing fields' } });
+  }
+  const id = orders.length + 1;
+  const order = { id, userId, items, total, status: 'created' };
+  orders.push(order);
+  res.status(201).json({ success: true, data: { id } });
 });
 
-app.get('/orders/health', (req, res) => {
-    res.json({
-        status: 'OK',
-        service: 'Orders Service',
-        timestamp: new Date().toISOString()
-    });
+app.get('/v1/orders/:id', (req, res) => {
+  const order = orders.find(o => o.id === parseInt(req.params.id));
+  if (!order) return res.status(404).json({ success: false, error: { code: 'ORDER_NOT_FOUND' } });
+  res.json({ success: true, data: order });
 });
 
-app.get('/orders/:orderId', (req, res) => {
-    const orderId = parseInt(req.params.orderId);
-    const order = fakeOrdersDb[orderId];
-
-    if (!order) {
-        return res.status(404).json({error: 'Order not found'});
-    }
-
-    res.json(order);
-});
-
-app.get('/orders', (req, res) => {
-    let orders = Object.values(fakeOrdersDb);
-
-    // Добавляем фильтрацию по userId если передан параметр
-    if (req.query.userId) {
-        const userId = parseInt(req.query.userId);
-        orders = orders.filter(order => order.userId === userId);
-    }
-
-    res.json(orders);
-});
-
-app.post('/orders', (req, res) => {
-    const orderData = req.body;
-    const orderId = currentId++;
-
-    const newOrder = {
-        id: orderId,
-        ...orderData
-    };
-
-    fakeOrdersDb[orderId] = newOrder;
-    res.status(201).json(newOrder);
-});
-
-app.put('/orders/:orderId', (req, res) => {
-    const orderId = parseInt(req.params.orderId);
-    const orderData = req.body;
-
-    if (!fakeOrdersDb[orderId]) {
-        return res.status(404).json({error: 'Order not found'});
-    }
-
-    fakeOrdersDb[orderId] = {
-        id: orderId,
-        ...orderData
-    };
-
-    res.json(fakeOrdersDb[orderId]);
-});
-
-app.delete('/orders/:orderId', (req, res) => {
-    const orderId = parseInt(req.params.orderId);
-
-    if (!fakeOrdersDb[orderId]) {
-        return res.status(404).json({error: 'Order not found'});
-    }
-
-    const deletedOrder = fakeOrdersDb[orderId];
-    delete fakeOrdersDb[orderId];
-
-    res.json({message: 'Order deleted', deletedOrder});
-});
-
-// Start server
-app.listen(PORT, () => {
-    console.log(`Orders service running on port ${PORT}`);
-});
+const PORT = process.env.PORT || 8002;
+app.listen(PORT, () => console.log(`Orders service running on port ${PORT}`));
