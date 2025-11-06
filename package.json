@@ -1,0 +1,13 @@
+{
+  "name": "micro-task-impl",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "jest --runInBand --detectOpenHandles"
+  },
+  "devDependencies": {
+    "jest": "^29.6.1",
+    "supertest": "^6.3.3",
+    "axios": "^1.6.2"
+  }
+}
