@@ -10,9 +10,9 @@ docker compose up -d --build
 
 После старта сервисы доступны:
 
-* API Gateway → [http://localhost:3000/v1](http://localhost:3000/v1)
-* Users Service → [http://localhost:4000](http://localhost:4000)
-* Orders Service → [http://localhost:5000](http://localhost:5000)
+* API Gateway → [http://localhost:8000/v1](http://localhost:8000/v1)
+* Users Service → [http://localhost:8001](http://localhost:8001)
+* Orders Service → [http://localhost:8002](http://localhost:8002)
 
 ### Остановка:
 
