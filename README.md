@@ -5,8 +5,7 @@
 ### Запуск контейнеров:
 
 ```
-docker-compose build
-docker-compose up
+docker compose up -d --build
 ```
 
 После старта сервисы доступны:
